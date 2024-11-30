@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATS Resume Scanner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: all 0.3s ease;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    /* Container */
+    .container {
+      display: flex;
+      max-width: 1000px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border: 2px solid #4a90e2;
+    }
+
+    .preview-section, .scanner-section {
+      padding: 30px;
+    }
+
+    .preview-section {
+      width: 40%;
+      background-color: #f0f4f8;
+      border-right: 2px solid #4a90e2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scanner-section {
+      width: 60%;
+      background-color: white;
+    }
+
+    /* PDF Preview Styles */
+    .pdf-preview {
+      width: 100%;
+      height: 300px;
+      background-color: #fff;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .pdf-preview iframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* File Input and Job Category Selection */
+    input[type="file"], select {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border: 1px solid #4a90e2;
+      border-radius: 8px;
+      background-color: #f9fafb;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    input[type="file"]:hover, select:hover {
+      background-color: #eef2f7;
+    }
+
+    /* Button Styles */
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #fff;
+      background-color:#4a90e2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #4a90e2;
+      transform: translateY(-3px);
+    }
+
+    /* Circular Score Progress */
+    .circular-score {
+      width: 150px;
+      height: 150px;
+      position: relative;
+      margin: 20px auto;
+    }
+
+    .circular-score svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .circular-score circle {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+    }
+
+    .circular-score .background-circle {
+      stroke: #e6e6e6;
+    }
+
+    .circular-score .progress-circle {
+      stroke: #4a90e2;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .circular-score .percentage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a90e2;
+    }
+
+    /* Result and Error Styles */
+    .result, .error {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .result {
+      background-color: #e0f7fa;
+      color: #4a90e2;
+    }
+
+    .error {
+      background-color: #ffebee;
+      color: #1477e9;
+    }
+
+    /* Loading Indicator */
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #4a90e2;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .preview-section, .scanner-section {
+        width: 100%;
+        border: none;
+      }
+
+      .preview-section {
+        border-bottom: 1px solid #e0e6ed;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- PDF Preview Section -->
+    <div class="preview-section">
+      <h2>PDF Preview</h2>
+      <div class="pdf-preview" id="pdfPreview">
+        <p>No file selected</p>
+      </div>
+    </div>
+
+    <!-- ATS Resume Scanner Section -->
+    <div class="scanner-section">
+      <h1>ATS Resume Scanner</h1>
+      <input type="file" id="resumeFile" accept=".pdf">
+      
+      <!-- Job Category Selection -->
+      <label for="jobCategory">Select Job Category:</label>
+      <select id="jobCategory">
+        <option value="software">Software Development</option>
+        <option value="marketing">Marketing</option>
+        <option value="sales">Sales</option>
+        <option value="dataScience">Data Science</option>
+        <option value="finance">Finance</option>
+        <option value="humanResources">Human Resources</option>
+        <option value="projectManagement">Project Management</option>
+        <option value="design">Design</option>
+        <option value="healthcare">Healthcare</option>
+        <option value="customerService">Customer Service</option>
+      </select>
+
+      <button onclick="calculateAtsScore()">Calculate ATS Score</button>
+
+      <!-- Circular Score Progress -->
+      <div class="circular-score">
+        <svg>
+          <circle class="background-circle" cx="75" cy="75" r="70"></circle>
+          <circle class="progress-circle" cx="75" cy="75" r="70"></circle>
+        </svg>
+        <div class="percentage" id="percentageDisplay">0%</div>
+      </div>
+
+      <div id="resultContainer"></div>
+      <div id="errorContainer"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script>
+    let resume = null;
+
+    document.getElementById('resumeFile').addEventListener('change', function(event) {
+      resume = event.target.files[0];
+      showPdfPreview(resume);
+    });
+
+    function showPdfPreview(file) {
+      const pdfPreview = document.getElementById('pdfPreview');
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        const typedarray = new Uint8Array(event.target.result);
+        
+        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+          pdf.getPage(1).then(function(page) {
+            const scale = 0.5;
+            const viewport = page.getViewport({ scale: scale });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            page.render({ canvasContext: context, viewport: viewport }).promise.then(function() {
+              pdfPreview.innerHTML = '';
+              pdfPreview.appendChild(canvas);
+            });
+          });
+        }).catch(function(error) {
+          pdfPreview.innerHTML = '<p>Error loading PDF preview.</p>';
+          console.error('Error loading PDF:', error);
+        });
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function calculateAtsScore() {
+      const resultContainer = document.getElementById('resultContainer');
+      const errorContainer = document.getElementById('errorContainer');
+      const jobCategory = document.getElementById('jobCategory').value;
+
+      if (!resume) {
+        errorContainer.innerHTML = '<div class="error"><strong>Please upload a PDF file</strong></div>';
+        return;
+      }
+
+      resultContainer.innerHTML = '<div class="loading-spinner"></div>';
+      const jobKeywords = {
+        software: /(?:JavaScript|HTML|CSS|React|Node\.js|Python)/gi,
+        marketing: /(?:SEO|Google Ads|Social Media|Brand Strategy|Analytics)/gi,
+        sales: /(?:Sales|B2B|CRM|Customer Relations|Lead Generation)/gi,
+        dataScience: /(?:Python|R|Data Analysis|Machine Learning|Big Data|AI)/gi,
+        finance: /(?:Finance|Investment|Accounting|Risk Management|Financial Analysis)/gi,
+        humanResources: /(?:HR|Recruitment|Employee Relations|Talent Management|Onboarding)/gi,
+        projectManagement: /(?:Project Management|Agile|Scrum|PMP|Leadership)/gi,
+        design: /(?:UI\/UX|Photoshop|Illustrator|Figma|Wireframes|Prototyping)/gi,
+        healthcare: /(?:Healthcare|Nursing|Patient Care|Medical Records|Physician)/gi,
+        customerService: /(?:Customer Service|Support|Client Relations|Call Center|Issue Resolution)/gi
+      };
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const typedarray = new Uint8Array(event.target.result);
+
+        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+          let resumeText = '';
+          const maxPages = 3; // Limit to first 3 pages for performance
+          let pagePromises = [];
+          
+          for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
+            pagePromises.push(pdf.getPage(i).then(function(page) {
+              return page.getTextContent().then(function(textContent) {
+                return textContent.items.map(item => item.str).join(' ');
+              });
+            }));
+          }
+
+          Promise.all(pagePromises).then(pages => {
+            resumeText = pages.join('\n');
+            const resumeTextLower = resumeText.toLowerCase();
+            const selectedKeywords = jobKeywords[jobCategory];
+            const keywordMatches = resumeTextLower.match(selectedKeywords) || [];
+            const keywordScore = Math.min(100, keywordMatches.length * 8);  // Adjust multiplier for category
+
+            updateCircularProgress(keywordScore);
+            resultContainer.innerHTML = <div class="result"><strong>ATS Score: ${keywordScore}%</strong></div>;
+          });
+        }).catch(error => {
+          console.error('Error parsing PDF:', error);
+          errorContainer.innerHTML = '<div class="error"><strong>Error parsing resume file</strong></div>';
+        });
+      };
+
+      reader.readAsArrayBuffer(resume); // Read as ArrayBuffer for PDF
+    }
+
+    function updateCircularProgress(score) {
+      const progressCircle = document.querySelector('.progress-circle');
+      const percentageDisplay = document.getElementById('percentageDisplay');
+      const offset = 440 - (440 * score) / 100;
+      progressCircle.style.strokeDashoffset = offset;
+      percentageDisplay.textContent = ${score.toFixed(2)}%;
+    }
+  </script>
+
+</body>
+</html>
